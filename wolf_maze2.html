@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Wolf Maze Game</title>
+<style>
+    body {
+        margin: 0;
+        background: #111;
+        color: #fff;
+        font-family: Arial, sans-serif;
+        overflow: hidden;
+    }
+
+    #ui {
+        position: fixed;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0,0,0,0.6);
+        padding: 10px 20px;
+        border-radius: 10px;
+        display: flex;
+        gap: 20px;
+        align-items: center;
+        z-index: 10;
+    }
+
+    #timer {
+        font-size: 18px;
+        font-weight: bold;
+    }
+
+    button {
+        cursor: pointer;
+        padding: 6px 12px;
+        border-radius: 6px;
+        border: none;
+        font-size: 14px;
+    }
+
+    canvas {
+        display: block;
+        margin: auto;
+        background: #fff;
+    }
+</style>
+</head>
+<body>
+
+<div id="ui">
+    <div id="timer">⏱️ 0.0 s</div>
+    <button onclick="goFullscreen()">Fullscreen</button>
+</div>
+
+<canvas id="game"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+function resizeCanvas() {
+    const size = Math.min(window.innerWidth, window.innerHeight);
+    canvas.width = size;
+    canvas.height = size;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+const tileCount = 10;
+let tileSize;
+
+const maze = [
+    [1,1,1,1,1,1,1,1,1,1],
+    [1,0,0,0,1,0,0,0,0,1],
+    [1,0,1,0,1,0,1,1,0,1],
+    [1,0,1,0,0,0,0,1,1,1],
+    [1,0,1,1,1,1,0,1,0,1],
+    [1,0,0,0,0,1,0,0,0,1],
+    [1,1,1,1,0,1,1,1,0,1],
+    [1,0,0,1,0,0,0,1,1,1],
+    [1,0,0,0,0,1,0,0,0,1],
+    [1,1,1,1,1,1,1,1,1,1]
+];
+
+const player = { x: 1, y: 1 };
+const goal = { x: 8, y: 8 };
+
+const playerImg = new Image();
+playerImg.src = "wolf3.jpg";
+
+const goalImg = new Image();
+goalImg.src = "wolf4.jpg";
+
+/* -------- TIMER -------- */
+let startTime = null;
+let timerInterval = null;
+
+function startTimer() {
+    startTime = performance.now();
+    timerInterval = setInterval(() => {
+        const elapsed = ((performance.now() - startTime) / 1000).toFixed(1);
+        document.getElementById("timer").textContent = `⏱️ ${elapsed} s`;
+    }, 100);
+}
+
+function stopTimer() {
+    clearInterval(timerInterval);
+}
+
+/* -------- DRAWING -------- */
+function drawMaze() {
+    tileSize = canvas.width / tileCount;
+
+    for (let y = 0; y < tileCount; y++) {
+        for (let x = 0; x < tileCount; x++) {
+            if (maze[y][x] === 1) {
+                ctx.fillStyle = "#333";
+                ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
+            }
+        }
+    }
+}
+
+function drawImages() {
+    ctx.drawImage(
+        playerImg,
+        player.x * tileSize + 5,
+        player.y * tileSize + 5,
+        tileSize - 10,
+        tileSize - 10
+    );
+
+    ctx.drawImage(
+        goalImg,
+        goal.x * tileSize + 5,
+        goal.y * tileSize + 5,
+        tileSize - 10,
+        tileSize - 10
+    );
+}
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawMaze();
+    drawImages();
+}
+
+function canMove(x, y) {
+    return maze[y][x] === 0;
+}
+
+/* -------- CONTROLS -------- */
+document.addEventListener("keydown", e => {
+    let nx = player.x;
+    let ny = player.y;
+
+    if (e.key === "ArrowUp") ny--;
+    if (e.key === "ArrowDown") ny++;
+    if (e.key === "ArrowLeft") nx--;
+    if (e.key === "ArrowRight") nx++;
+
+    if (canMove(nx, ny)) {
+        player.x = nx;
+        player.y = ny;
+    }
+
+    if (player.x === goal.x && player.y === goal.y) {
+        stopTimer();
+        setTimeout(() => {
+            alert(`🎉 You won in ${document.getElementById("timer").textContent}`);
+        }, 100);
+    }
+
+    draw();
+});
+
+/* -------- FULLSCREEN -------- */
+function goFullscreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+    }
+}
+
+/* -------- START -------- */
+playerImg.onload = () => {
+    draw();
+    startTimer();
+    goFullscreen();
+};
+</script>
+
+</body>
+</html>
